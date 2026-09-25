@@ -1,0 +1,11 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "Sistema_Pedidos",
+            "database": "./banco.db"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}
