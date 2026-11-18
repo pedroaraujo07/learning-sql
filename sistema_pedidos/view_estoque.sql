@@ -1,0 +1,29 @@
+-- a. Criar a view que mostra estoque constante no BD Pedidos.
+-- (VIEW_ESTOQUE) contendo os dados indicados no modelo apresentado.
+-- Analise os dados gerados na view. Faça os ajustes na view para não
+-- mostrar dados inconsistentes, do tipo ter saído mais do que
+-- foi adquirido, bem como não mostrar valores nulos.
+-- RESOLUÇÃO:
+
+CREATE OR REPLACE VIEW VIEW_ESTOQUE AS
+SELECT 
+    E.DATA_ENTRADA,
+    E.CODIGO_PRO,
+    P.DESCRICAO AS PRODUTO,
+    E.CODIGO_PRA,
+    PR.DESCRICAO AS PRATELEIRA,
+    NVL(E.QUANTIDADE, 0) AS QTD_ADQUIRIDA,
+    NVL(SAIDAS.QTD_SAIDA, 0) AS QTD_SAIDA,
+    (NVL(E.QUANTIDADE, 0) - NVL(SAIDAS.QTD_SAIDA, 0)) AS SALDO_ATUAL,
+    NVL(TO_CHAR(E.DATA_VALIDADE, 'DD/MM/YYYY'), 'SEM VALIDADE') AS DATA_VALIDADE
+FROM ESTOQUE E
+JOIN PRODUTO P ON E.CODIGO_PRO = P.CODIGO
+JOIN PRATELEIRA PR ON E.CODIGO_PRA = PR.CODIGO
+LEFT JOIN (
+    SELECT CODIGO_PRO, SUM(QUANTIDADE) AS QTD_SAIDA
+    FROM ITEM_PRODUTO
+    GROUP BY CODIGO_PRO
+) SAIDAS ON E.CODIGO_PRO = SAIDAS.CODIGO_PRO
+WHERE (NVL(E.QUANTIDADE, 0) - NVL(SAIDAS.QTD_SAIDA, 0)) >= 0;
+
+SELECT * FROM VIEW_ESTOQUE;

@@ -816,3 +816,63 @@ FROM PEDIDO PE
 JOIN ITEM_PRODUTO IP ON PE.NUMERO = IP.NUMERO_PED
 JOIN PRODUTO PR ON IP.CODIGO_PRO = PR.CODIGO
 ORDER BY PE.DATA ASC, PR.DESCRICAO DESC;
+
+
+
+-- a. Criar a view que mostra estoque constante no BD Pedidos.
+-- (VIEW_ESTOQUE) contendo os dados indicados no modelo apresentado.
+-- Analise os dados gerados na view. Faça os ajustes na view para não
+-- mostrar dados inconsistentes, do tipo ter saído mais do que
+-- foi adquirido, bem como não mostrar valores nulos.
+-- RESOLUÇÃO:
+
+CREATE OR REPLACE VIEW VIEW_ESTOQUE AS
+SELECT 
+    E.DATA_ENTRADA,
+    E.CODIGO_PRO,
+    P.DESCRICAO AS PRODUTO,
+    E.CODIGO_PRA,
+    PR.DESCRICAO AS PRATELEIRA,
+    NVL(E.QUANTIDADE, 0) AS QTD_ADQUIRIDA,
+    NVL(SAIDAS.QTD_SAIDA, 0) AS QTD_SAIDA,
+    (NVL(E.QUANTIDADE, 0) - NVL(SAIDAS.QTD_SAIDA, 0)) AS SALDO_ATUAL,
+    NVL(TO_CHAR(E.DATA_VALIDADE, 'DD/MM/YYYY'), 'SEM VALIDADE') AS DATA_VALIDADE
+FROM ESTOQUE E
+JOIN PRODUTO P ON E.CODIGO_PRO = P.CODIGO
+JOIN PRATELEIRA PR ON E.CODIGO_PRA = PR.CODIGO
+LEFT JOIN (
+    SELECT CODIGO_PRO, SUM(QUANTIDADE) AS QTD_SAIDA
+    FROM ITEM_PRODUTO
+    GROUP BY CODIGO_PRO
+) SAIDAS ON E.CODIGO_PRO = SAIDAS.CODIGO_PRO
+WHERE (NVL(E.QUANTIDADE, 0) - NVL(SAIDAS.QTD_SAIDA, 0)) >= 0;
+
+SELECT * FROM VIEW_ESTOQUE;
+
+
+
+-- b. Fazer queries, pelo menos uma para cada ação (INSERÇÃO, ALTERAÇÃO
+-- e/ou DELEÇÃO) na tabela escolhida.
+-- RESOLUÇÃO:
+SELECT * FROM VENDEDOR;
+
+INSERT INTO VENDEDOR (MATRICULA, NOME, CNPF) 
+VALUES (999, 'Carlos Alberto Teste', '000000000');
+
+UPDATE VENDEDOR 
+SET NOME = 'Carlos Alberto Alterado' 
+WHERE MATRICULA = 999;
+
+DELETE FROM VENDEDOR 
+WHERE MATRICULA = 999;
+
+-- C. Fazer uma query para verificar os logs registrados nas ações do item
+-- b.
+-- RESOLUÇÃO:
+SELECT ID_LOG, 
+       ACAO, 
+       TABELA, 
+       TO_CHAR(DATA_EVENTO, 'DD/MM/YYYY HH24:MI:SS') AS DATA_HORA
+FROM LOG_ALTERACOES
+WHERE TABELA = 'VENDEDOR'
+ORDER BY ID_LOG ASC;
